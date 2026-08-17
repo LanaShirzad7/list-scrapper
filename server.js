@@ -12,19 +12,20 @@ app.get('/scrape', async (req, res) => {
     const searchQuery = encodeURIComponent(`${location || 'Yerevan'} apartment ${bedrooms ? bedrooms + ' room' : ''}`);
     const targetUrl = `https://www.list.am/en/search?q=${searchQuery}`;
 
-    // اضافه شدن render=true برای دور زدن صفحه امنیتی با اجرای جاوااسکریپت
+    // استفاده از ScraperAPI با رندر جاوااسکریپت
     const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetUrl)}&render=true`;
 
     try {
         const response = await axios.get(scraperApiUrl, { timeout: 60000 });
         const $ = cheerio.load(response.data);
         
-        // این خط را برای خطایابی گذاشتم تا در لاگ رندر ببینیم دقیقا چه صفحه‌ای لود شده
-        console.log("Page Title loaded:", $('title').text());
+        // استخراج عنوان صفحه برای خطایابی
+        const pageTitle = $('title').text().trim() || 'No Title Found';
 
         const listings = [];
 
-        $('.gl .a').slice(0, 15).each((index, element) => {
+        // هم کلاس .gl (Grid) و هم .dl (List) را جستجو می‌کند
+        $('.gl .a, .dl .a').slice(0, 15).each((index, element) => {
             const title = $(element).find('.l').text().trim() || 'Unknown Title';
             const priceText = $(element).find('.p').text().trim() || '0';
             const rawPrice = Number(priceText.replace(/[^0-9]/g, ''));
@@ -43,7 +44,13 @@ app.get('/scrape', async (req, res) => {
             }
         });
 
-        res.json({ results: listings });
+        // خروجی جدید که عنوان صفحه را هم به شما نشان می‌دهد
+        res.json({ 
+            page_loaded: pageTitle,
+            results_found: listings.length,
+            results: listings 
+        });
+
     } catch (error) {
         console.error("Scraping failed:", error.message);
         res.status(500).json({ error: error.message });
