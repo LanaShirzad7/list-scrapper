@@ -14,11 +14,15 @@ app.get('/scrape', async (req, res) => {
 
     let browser;
     try {
+        // تنظیمات سازگار با Render و محیط‌های ابری
+        const executablePath = await chromium.executablePath() || 
+            (process.platform === 'win32' ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : undefined);
+
         browser = await puppeteer.launch({ 
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(),
-            headless: chromium.headless,
+            executablePath: executablePath,
+            headless: true,
             ignoreHTTPSErrors: true,
         });
         
