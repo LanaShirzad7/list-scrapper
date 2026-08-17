@@ -12,12 +12,16 @@ app.get('/scrape', async (req, res) => {
     const searchQuery = encodeURIComponent(`${location || 'Yerevan'} apartment ${bedrooms ? bedrooms + ' room' : ''}`);
     const targetUrl = `https://www.list.am/en/search?q=${searchQuery}`;
 
-    // ارسال درخواست از طریق پروکسی ScraperAPI برای دور زدن خطای 403
-    const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetUrl)}`;
+    // اضافه شدن render=true برای دور زدن صفحه امنیتی با اجرای جاوااسکریپت
+    const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetUrl)}&render=true`;
 
     try {
-        const response = await axios.get(scraperApiUrl);
+        const response = await axios.get(scraperApiUrl, { timeout: 60000 });
         const $ = cheerio.load(response.data);
+        
+        // این خط را برای خطایابی گذاشتم تا در لاگ رندر ببینیم دقیقا چه صفحه‌ای لود شده
+        console.log("Page Title loaded:", $('title').text());
+
         const listings = [];
 
         $('.gl .a').slice(0, 15).each((index, element) => {
