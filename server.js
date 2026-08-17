@@ -1,6 +1,7 @@
 const express = require('express');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const chromium = require('@sparticuz/chromium');
 
 puppeteer.use(StealthPlugin());
 
@@ -13,13 +14,15 @@ app.get('/scrape', async (req, res) => {
 
     let browser;
     try {
-        // Render requires specific args to run Chromium in the cloud
         browser = await puppeteer.launch({ 
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] 
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless,
+            ignoreHTTPSErrors: true,
         });
-        const page = await browser.newPage();
         
+        const page = await browser.newPage();
         await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
         const listings = await page.evaluate(() => {
