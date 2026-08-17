@@ -12,7 +12,11 @@ app.get('/scrape', async (req, res) => {
     try {
         const response = await axios.get(targetUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,hy;q=0.8',
+                'Referer': 'https://www.list.am/',
+                'Cache-Control': 'no-cache'
             }
         });
 
@@ -40,8 +44,8 @@ app.get('/scrape', async (req, res) => {
 
         res.json({ results: listings });
     } catch (error) {
-        console.error("Scraping failed:", error);
-        res.status(500).json({ error: error.message });
+        console.error("Scraping failed:", error.response?.status || error.message);
+        res.status(500).json({ error: error.message, status: error.response?.status });
     }
 });
 
