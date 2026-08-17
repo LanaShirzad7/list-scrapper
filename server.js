@@ -4,22 +4,19 @@ const cheerio = require('cheerio');
 
 const app = express();
 
+// کلید API خود را دقیقاً بین دو کوتیشن زیر قرار دهید
+const SCRAPER_API_KEY = 'bee6b60b60476094a61f75b1e9890824';
+
 app.get('/scrape', async (req, res) => {
     const { location, bedrooms } = req.query;
     const searchQuery = encodeURIComponent(`${location || 'Yerevan'} apartment ${bedrooms ? bedrooms + ' room' : ''}`);
     const targetUrl = `https://www.list.am/en/search?q=${searchQuery}`;
 
-    try {
-        const response = await axios.get(targetUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9,hy;q=0.8',
-                'Referer': 'https://www.list.am/',
-                'Cache-Control': 'no-cache'
-            }
-        });
+    // ارسال درخواست از طریق پروکسی ScraperAPI برای دور زدن خطای 403
+    const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(targetUrl)}`;
 
+    try {
+        const response = await axios.get(scraperApiUrl);
         const $ = cheerio.load(response.data);
         const listings = [];
 
@@ -44,8 +41,8 @@ app.get('/scrape', async (req, res) => {
 
         res.json({ results: listings });
     } catch (error) {
-        console.error("Scraping failed:", error.response?.status || error.message);
-        res.status(500).json({ error: error.message, status: error.response?.status });
+        console.error("Scraping failed:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 
